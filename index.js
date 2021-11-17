@@ -10,8 +10,10 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-app.use(express.json());
+
+// urlencode: Returns middleware that only parses urlencoded bodies and only looks at requests where the Content-Type header matches the type option
 app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 
 app.use(session({
     secret: 'secret',
@@ -33,7 +35,10 @@ app.post('/login', function (req, res) {
         connection.query('SELECT * FROM users WHERE username = ? AND password = ?', [userName, password], (err, result) => {
             if (err) throw err;
             if (result.length > 0) {
-                res.send(result)
+                // res.send(result)
+                req.session.loggedin = true;
+                req.session.username = userName;
+                res.redirect('/home');
             } else {
                 res.send('Invalid UserName or Password')
             }
@@ -44,6 +49,15 @@ app.post('/login', function (req, res) {
 
     }
 });
+
+app.get('/home', function (req, res) {
+    if (req.session.loggedin) {
+        res.send('Welcome back, ' + req.session.username + '!');
+    } else {
+        res.send('Please login to view this page!');
+    }
+    res.end();
+})
 
 
 //listen
